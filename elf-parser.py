@@ -108,3 +108,109 @@ def elfHeaderParser():
     offset += 4
     decimalValue = unpack('I', chunk)[0]
     curElfHeader.e_version = versions[decimalValue]
+    if fileClassID == 1:
+        for i in range(4):
+            chunk = file.read(1)
+            offset += 1
+            curElfHeader.e_entry = chunk.encode('hex') + curElfHeader.e_entry
+
+        curElfHeader.e_entry = '0x' + curElfHeader.e_entry
+
+        for i in range(4):
+            chunk = file.read(1)
+            offset += 1
+            curElfHeader.e_phoff = chunk.encode('hex') + curElfHeader.e_phoff
+
+        curElfHeader.e_phoff = '0x' + curElfHeader.e_phoff
+
+        for i in range(4):
+            chunk = file.read(1)
+            offset += 1
+            curElfHeader.e_shoff = chunk.encode('hex') + curElfHeader.e_shoff
+
+        curElfHeader.e_shoff = '0x' + curElfHeader.e_shoff
+    else:
+        for i in range(8):
+            chunk = file.read(1)
+            offset += 1
+            curElfHeader.e_entry = chunk.encode('hex') + curElfHeader.e_entry
+
+        curElfHeader.e_entry = '0x' + curElfHeader.e_entry
+
+        for i in range(8):
+            chunk = file.read(1)
+            offset += 1
+            curElfHeader.e_phoff = chunk.encode('hex') + curElfHeader.e_phoff
+
+        curElfHeader.e_phoff = '0x' + curElfHeader.e_phoff
+
+        for i in range(8):
+            chunk = file.read(1)
+            offset += 1
+            curElfHeader.e_shoff = chunk.encode('hex') + curElfHeader.e_shoff
+
+        curElfHeader.e_shoff = '0x' + curElfHeader.e_shoff
+
+    chunk = file.read(4)
+    offset += 4
+    decimalValue = unpack('I', chunk)[0]
+    curElfHeader.e_flags = decimalValue
+
+    chunk = file.read(2)
+    offset += 2
+    decimalValue = unpack('H', chunk)[0]
+    curElfHeader.e_ehsize = decimalValue
+
+    chunk = file.read(2)
+    offset += 2
+    decimalValue = unpack('H', chunk)[0]
+    curElfHeader.e_phentsize = decimalValue
+
+    chunk = file.read(2)
+    offset += 2
+    decimalValue = unpack('H', chunk)[0]
+    curElfHeader.e_phnum = decimalValue
+
+    chunk = file.read(2)
+    offset += 2
+    decimalValue = unpack('H', chunk)[0]
+    curElfHeader.e_shentsize = decimalValue
+
+    chunk = file.read(2)
+    offset += 2
+    decimalValue = unpack('H', chunk)[0]
+    curElfHeader.e_shnum = decimalValue
+
+    chunk = file.read(2)
+    offset += 2
+    decimalValue = unpack('H', chunk)[0]
+    curElfHeader.e_shstrndx = decimalValue
+
+    if offset != curElfHeader.e_ehsize:
+        file.close()
+        exit()
+    file.close()
+
+def magicalCheck():
+    check = False
+    magicNumber = ''
+
+    for i in range(4):
+        magicNumber += curElfHeader.e_indent[i]
+
+    if magicNumber == '7f454c46':
+        check = True
+
+    return check
+
+def sectionHeaderParser():
+    if not curElfHeader:
+        exit()
+    
+    offset = 0
+    chunk = ''
+    decimalValue = 0
+    headerOffset = int(curElfHeader.e_shoff, 16)
+
+    entryCount = curElfHeader.e_shnum
+    entrySize = curElfHeader.e_shentsize
