@@ -214,3 +214,105 @@ def sectionHeaderParser():
 
     entryCount = curElfHeader.e_shnum
     entrySize = curElfHeader.e_shentsize
+    file = open(fileName, 'rb')
+    file.seek(headerOffset)
+
+    for i in range(entryCount):
+        curSectionHeader.append(sectionHeaderClass())
+        index = len(curSectionHeader) - 1
+
+        chunk = file.read(4)
+        offset += 4
+        decimalValue = unpack('I', chunk)[0]
+        curSectionHeader[index].sh_name = decimalValue
+
+        chunk = file.read(4)
+        offset += 4
+        decimalValue = unpack('I', chunk)[0]
+        if decimalValue <= 19:
+            curSectionHeader[index].sh_type = sectionTypes[decimalValue]
+        else:
+            curSectionHeader[index].sh_type = 'PROGBITS'
+
+        if fileClassID == 1:
+            chunk = file.read(4)
+            offset += 4
+            decimalValue = unpack('I', chunk)[0]
+            curSectionHeader[index].sh_flags = decimalValue
+
+            for i in range(4):
+                chunk = file.read(1)
+                offset += 1
+                curSectionHeader[index].sh_addr = chunk.encode('hex') + curSectionHeader[index].sh_addr
+            
+            curSectionHeader[index].sh_addr = '0x' + curSectionHeader[index].sh_addr
+            
+            for i in range(4):
+                chunk = file.read(1)
+                offset += 1
+                curSectionHeader[index].sh_offset = chunk.encode('hex') + curSectionHeader[index].sh_offset
+            
+            curSectionHeader[index].sh_offset = '0x' + curSectionHeader[index].sh_offset
+
+            chunk = file.read(4)
+            offset += 4
+            decimalValue = unpack('I', chunk)[0]
+            curSectionHeader[index].sh_size = decimalValue
+        else:
+            chunk = file.read(8)
+            offset += 8
+            decimalValue = unpack('Q', chunk)[0]
+            curSectionHeader[index].sh_flags = decimalValue
+
+            for i in range(8):
+                chunk = file.read(1)
+                offset += 1
+                curSectionHeader[index].sh_addr = chunk.encode('hex') + curSectionHeader[index].sh_addr
+            
+            curSectionHeader[index].sh_addr = '0x' + curSectionHeader[index].sh_addr
+
+            for i in range(8):
+                chunk = file.read(1)
+                offset += 1
+                curSectionHeader[index].sh_offset = chunk.encode('hex') + curSectionHeader[index].sh_offset
+            
+            curSectionHeader[index].sh_offset = '0x' + curSectionHeader[index].sh_offset
+
+            chunk = file.read(8)
+            offset += 8
+            decimalValue = unpack('Q', chunk)[0]
+            curSectionHeader[index].sh_size = decimalValue
+
+        for i in range(4):
+            chunk = file.read(1)
+            offset += 1
+            curSectionHeader[index].sh_link = chunk.encode('hex') + curSectionHeader[index].sh_link
+        
+        curSectionHeader[index].sh_link = '0x' + curSectionHeader[index].sh_link
+
+        chunk = file.read(4)
+        offset += 4
+        decimalValue = unpack('I', chunk)[0]
+        curSectionHeader[index].sh_info = decimalValue
+
+        if fileClassID == 1:
+            chunk = file.read(4)
+            offset += 4
+            decimalValue = unpack('I', chunk)[0]
+            curSectionHeader[index].sh_addralign = decimalValue
+
+            chunk = file.read(4)
+            offset += 4
+            decimalValue = unpack('I', chunk)[0]
+            curSectionHeader[index].sh_entsize = decimalValue
+        else:
+            chunk = file.read(8)
+            offset += 8
+            decimalValue = unpack('Q', chunk)[0]
+            curSectionHeader[index].sh_addralign = decimalValue
+
+            chunk = file.read(8)
+            offset += 8
+            decimalValue = unpack('Q', chunk)[0]
+            curSectionHeader[index].sh_entsize = decimalValue
+
