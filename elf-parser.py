@@ -397,3 +397,89 @@ def symbolTableParser(table, flag):
                 chunk = file.read(1)
                 offset += 1
                 table[index].st_value = chunk.encode('hex') + table[index].st_valueA
+                table[index].st_value = '0x' + table[index].st_value
+
+            chunk = file.read(4)
+            offset += 4
+            decimalValue = unpack('I', chunk)[0]
+            table[index].st_size = decimalValue
+
+            chunk = str(file.read(1))
+            offset += 1
+            table[index].st_info[0] = symbolBinding[unpack('b', chunk)[0] >> 4]
+            table[index].st_info[1] = symbolTypes[unpack('b', chunk)[0] & 15]
+            
+            chunk = file.read(1)
+            offset += 1
+            table[index].st_other = chunk.encode('hex')
+
+            chunk = file.read(2)
+            offset += 2
+            decimalValue = unpack('H', chunk)[0]
+            table[index].st_shndx = decimalValue
+    else:
+        while offset < symTableSize:
+            table.append(symbolTableClass())
+            index = len(table) - 1
+        
+            chunk = file.read(4)
+            offset += 4
+            decimalValue = unpack('I', chunk)[0]
+            table[index].st_name = decimalValue
+
+            chunk = str(file.read(1))
+            offset += 1
+            table[index].st_info[0] = symbolBinding[unpack('b', chunk)[0] >> 4]
+            table[index].st_info[1] = symbolTypes[unpack('b', chunk)[0] & 15]
+            
+            chunk = file.read(1)
+            offset += 1
+            table[index].st_other = chunk.encode('hex')
+
+            chunk = file.read(2)
+            offset += 2
+            decimalValue = unpack('H', chunk)[0]
+            table[index].st_shndx = decimalValue
+
+            for i in range(8):
+                chunk = file.read(1)
+                offset += 1
+                table[index].st_value = chunk.encode('hex') + table[index].st_value
+
+            table[index].st_value = '0x' + table[index].st_value
+
+            chunk = file.read(8)
+            offset += 8
+            decimalValue = unpack('Q', chunk)[0]
+            table[index].st_size = decimalValue
+
+    file.close()
+
+    stringTableParser(table, strTableOffset, strTableSize)
+
+
+def elfHeaderPrinter():
+    magicSeq = ''
+    for i in range(4):
+        magicSeq += curElfHeader.e_indent[i] + ' '
+
+    print 
+    print 'Elf Header of {}:'.format(fileName)
+    print
+    print ('{:<50}' + magicSeq).format('Magic number:')
+    print ('{:<50}' + classes[int(curElfHeader.e_indent[4], 16)]).format('File class:')
+    print ('{:<50}' + datas[int(curElfHeader.e_indent[5], 16)]).format('Data encoding:')
+    print ('{:<50}' + versions[int(curElfHeader.e_indent[6], 16)]).format('File version:')
+    print ('{:<50}' + str(curElfHeader.e_type)).format('Object file type:')
+    print ('{:<50}' + str(curElfHeader.e_machine)).format('Machine type:')
+    print ('{:<50}' + str(curElfHeader.e_version)).format('Object file version:')
+    print ('{:<50}' + str(curElfHeader.e_entry)).format('Entry point address:')
+    print ('{:<50}' + str(curElfHeader.e_phoff)).format('Program header offset:')
+    print ('{:<50}' + str(curElfHeader.e_shoff)).format('Section header offset:')
+    print ('{:<50}' + str(curElfHeader.e_flags)).format('Processor-specific flags:')
+    print ('{:<50}' + str(curElfHeader.e_ehsize)).format('ELF header size:')
+    print ('{:<50}' + str(curElfHeader.e_phentsize)).format('Size of the program header entry:')
+    print ('{:<50}' + str(curElfHeader.e_phnum)).format('Number of program header entries:')
+    print ('{:<50}' + str(curElfHeader.e_shentsize)).format('Size of section header entry:')
+    print ('{:<50}' + str(curElfHeader.e_shnum)).format('Number of section header entries:')
+    print ('{:<50}' + str(curElfHeader.e_shstrndx)).format('Section name string table index:')
