@@ -316,3 +316,84 @@ def sectionHeaderParser():
             decimalValue = unpack('Q', chunk)[0]
             curSectionHeader[index].sh_entsize = decimalValue
 
+    if len(curSectionHeader) != curElfHeader.e_shnum or offset != (curElfHeader.e_shnum * curElfHeader.e_shentsize):
+        file.close()
+        exit()
+    file.close()
+
+    strTableIndex = int(curElfHeader.e_shstrndx)
+    strTableOffset = int(curSectionHeader[strTableIndex].sh_offset, 16)
+    strTableSize = int(curSectionHeader[strTableIndex].sh_size)
+
+    stringTableParser(curSectionHeader, strTableOffset, strTableSize)
+
+def stringTableParser(table, offset, size):
+    chunk = ''
+    decimalValue = 0
+    strValue = ''
+
+    file = open(fileName, 'rb')
+
+    for i in table:
+        strOffset = int(i.getName())
+        file.seek(offset + strOffset)
+
+        while chunk != '\0':
+            chunk = file.read(1)
+            if(chunk != '\0'):
+                strValue += chunk
+        
+        i.setName(strValue)
+        strValue = ''
+        chunk = ''
+
+    file.close()
+
+def symbolTableParser(table, flag):
+    offset = 0
+    symTableOffset = 0
+    strTableOffset = 0
+    symTableSize = 0
+    strTableSize = 0
+    decimalValue = 0
+    chunk = ''
+
+    if flag == 'Static':
+        for i in curSectionHeader:
+            if i.sh_name == '.symtab' and i.sh_type == 'SHT_SYMTAB':
+                symTableOffset = int(i.sh_offset, 16)
+                symTableSize = i.sh_size
+            if i.sh_name == '.strtab' and i.sh_type == 'SHT_STRTAB':
+                strTableOffset = int(i.sh_offset, 16)
+                strTableSize = i.sh_size
+    elif flag == 'Dynamic':
+        for i in curSectionHeader:
+            if i.sh_name == '.dynsym' and i.sh_type == 'SHT_DYNSYM':
+                symTableOffset = int(i.sh_offset, 16)
+                symTableSize = i.sh_size
+            if i.sh_name == '.dynstr' and i.sh_type == 'SHT_STRTAB':
+                strTableOffset = int(i.sh_offset, 16)
+                strTableSize = i.sh_size
+    else:
+        exit()
+    
+    if symTableOffset == 0 or symTableSize == 0 or strTableOffset == 0 or strTableSize == 0:
+        exit()
+
+    file = open(fileName, 'rb')
+    file.seek(symTableOffset)
+
+    if fileClassID == 1:
+        while offset < symTableSize:
+            table.append(symbolTableClass())
+            index = len(table) - 1
+        
+            chunk = file.read(4)
+            offset += 4
+            decimalValue = unpack('I', chunk)[0]
+            table[index].st_name = decimalValue
+
+            for i in range(4):
+                chunk = file.read(1)
+                offset += 1
+                table[index].st_value = chunk.encode('hex') + table[index].st_valueA
