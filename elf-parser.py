@@ -483,3 +483,73 @@ def elfHeaderPrinter():
     print ('{:<50}' + str(curElfHeader.e_shentsize)).format('Size of section header entry:')
     print ('{:<50}' + str(curElfHeader.e_shnum)).format('Number of section header entries:')
     print ('{:<50}' + str(curElfHeader.e_shstrndx)).format('Section name string table index:')
+    def sectionHeaderPrinter():
+    index = 0
+
+    print 
+    print 'Section Header of {}:'.format(fileName)
+    print
+    print ('{0:<5}{1:<21}{2:<17}{3:<8}{4:<21}{5:<21}{6:<7}{7:<13}{8:<7}{9:<12}{10:<0}').format('No', 'Name', 'Type', 'Flags', 'Address', 'Offset', 'Size', 'Link', 'Info', 'Alignment', 'EntSize')
+    print ('{0:<5}{4:<21}{2:<17}{3:<8}{4:<21}{4:<21}{5:<7}{6:<13}{5:<7}{7:<12}{8:<0}').format('--', '--------', '--------------', '-----', '------------------', '----', '----------', '---------', '-------')
+
+    for i in curSectionHeader:
+        print ('{0:<5}{1:<21}{2:<17}{3:<8}{4:<21}{5:<21}{6:<7}{7:<13}{8:<7}{9:<12}{10:<13}').format(index, i.sh_name, i.sh_type, i.sh_flags, i.sh_addr, i.sh_offset, i.sh_size, i.sh_link, i.sh_info, i.sh_addralign, i.sh_entsize)
+        index += 1
+
+def symbolTablePrinter(table, flag):
+    index = 0
+
+    if flag == 'Static':
+        print 
+        print 'Symbol table of \'{}\':'.format('.symtab')
+        print
+    elif flag == 'Dynamic':
+        print 
+        print 'Symbol table of \'{}\':'.format('.dynsym')
+        print
+    else:
+        exit()
+
+
+    print ('{0:<5}{1:<8}{2:<10}{3:<15}{4:<21}{5:<10}{6:<7}').format('No', 'Index', 'Binding', 'Size', 'Value', 'Type', 'Name')
+    print ('{0:<5}{1:<8}{2:<10}{3:<15}{4:<21}{5:<10}{6:<7}').format('--', '-----', '-------', '------------', '------------------', '-------', '---------------------------')
+
+    for i in table:
+        print ('{0:<5}{1:<8}{2:<10}{3:<15}{4:<21}{5:<10}{6:<7}').format(index, i.st_shndx, i.st_info[0], i.st_size, i.st_value, i.st_info[1], i.st_name)
+        index += 1
+
+def main():
+    
+    global fileName
+
+    argumentParser = argparse.ArgumentParser("Elf parser.")
+    argumentParser.add_argument('file', nargs=1, metavar='elf file')
+    argumentParser.add_argument('-e', '--elf-header', action='store_true')
+    argumentParser.add_argument('-S', '--section-header', action='store_true')
+    argumentParser.add_argument('-s', '--symbol-table', action='store_true')
+
+    if len(sys.argv) <= 1:
+        sys.argv.append('--help')
+
+    args = argumentParser.parse_args()
+    fileName = ''.join(args.file)
+
+    elfHeaderParser()
+    if int(curElfHeader.e_shoff, 16) > 0 and curElfHeader.e_shnum > 0:
+        sectionHeaderParser()
+        symbolTableParser(curStaticSymbolTable, symbolFlag[0])
+        symbolTableParser(curDynamicSymbolTable, symbolFlag[1])
+    ''' 
+    if int(curElfHeader.e_phoff, 16) > 0 and curElfHeader.e_phnum > 0:
+        programHeaderParser()
+    '''
+
+    if len(sys.argv) == 2 or args.elf_header:
+        elfHeaderPrinter()
+    if args.section_header:
+        sectionHeaderPrinter()
+    if args.symbol_table:
+        symbolTablePrinter(curStaticSymbolTable, symbolFlag[0])
+        symbolTablePrinter(curDynamicSymbolTable, symbolFlag[1])
+if __name__ == "__main__":
+    main()
